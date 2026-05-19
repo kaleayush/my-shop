@@ -78,23 +78,23 @@
 
 ## Phase 6: POS Billing
 
-- [ ] DraftSale entity
-- [ ] DraftSaleItem entity
-- [ ] StockReservation entity
-- [ ] Create draft sale API
-- [ ] Add item to draft API
-- [ ] Reserve stock on add item
-- [ ] Remove item and release stock
-- [ ] Hold draft API
-- [ ] Cancel draft API
-- [ ] Complete sale API
-- [ ] Sale entity
-- [ ] SaleItem entity
-- [ ] Payment entity
-- [ ] Partial payment support
-- [ ] POS billing UI
-- [ ] Multi-bill tabs UI
-- [ ] Payment UI
+- [x] DraftSale entity
+- [x] DraftSaleItem entity
+- [x] StockReservation entity
+- [x] Create draft sale API
+- [x] Add item to draft API
+- [x] Reserve stock on add item
+- [x] Remove item and release stock
+- [x] Hold draft API
+- [x] Cancel draft API
+- [x] Complete sale API
+- [x] Sale entity
+- [x] SaleItem entity
+- [x] Payment entity
+- [x] Partial payment support
+- [x] POS billing UI
+- [x] Multi-bill tabs UI
+- [x] Payment UI
 
 ## Phase 7: Purchase Bill OCR
 

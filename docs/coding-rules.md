@@ -14,7 +14,7 @@
 
 - Use .NET 8.
 - Use Onion Architecture.
-- Use EF Core.
+- Use EF Core only in Infrastructure.
 - Use PostgreSQL.
 - Use async/await.
 - Use DTOs.
@@ -37,14 +37,18 @@ Allowed:
 - Controllers
 - Middleware
 - Swagger
+- CORS
 - Authentication config
 - Dependency injection composition
+- API response envelope formatting
+- HTTP-specific adapters such as CurrentUserService
 
 Not allowed:
 
 - Business logic
 - Repository logic
 - DbContext direct usage
+- Domain entity exposure as response payload
 
 ### Application Project
 
@@ -53,9 +57,20 @@ Allowed:
 - Services
 - DTOs
 - Validators
-- Interfaces
+- Repository/service contracts
 - CQRS handlers
 - Business workflows
+- Result pattern
+- IAppDbContext save abstraction
+
+Not allowed:
+
+- EF Core dependency
+- EF Core DbSet<T> exposure
+- EF Core query APIs such as Include, AnyAsync, ToListAsync
+- ASP.NET HttpContext access
+- Infrastructure or API project references
+- External service implementation details
 
 ### Domain Project
 
@@ -65,31 +80,48 @@ Allowed:
 - Enums
 - Constants
 - Value objects
+- Pure domain rules
 
 Not allowed:
 
 - EF Core dependency
+- Application dependency
 - Infrastructure dependency
+- API dependency
 
 ### Infrastructure Project
 
 Allowed:
 
-- DbContext
-- Repository implementation
-- External service implementation
+- AppDbContext
+- EF Core entity configurations
+- EF Core migrations
+- Repository implementations
+- PostgreSQL configuration
+- External service implementations
 - OCR implementation
 - File storage implementation
 
-Repository rules:
+Not allowed:
 
+- Controllers
+- API response envelope formatting
+- IHttpContextAccessor/current HTTP claims access
+- Business workflow orchestration
+
+## Repository Rules
+
+- Repository interfaces live in Application.
+- Repository implementations live in Infrastructure.
 - Repositories must NOT call SaveChangesAsync.
 - SaveChangesAsync is called only in Application services.
-- DbContext registered as scoped — same instance shared across repos per request.
-- Repositories depend on IAppDbContext, not AppDbContext.
-- Application services depend on IAppDbContext, not AppDbContext.
-- IAppDbContext defined in Application layer.
+- DbContext is registered as scoped; same instance shared across repositories per request.
+- Repository implementations depend on AppDbContext.
+- Application services depend on repository interfaces and IAppDbContext, not AppDbContext.
+- IAppDbContext is defined in Application.
 - AppDbContext in Infrastructure implements IAppDbContext.
+- IAppDbContext exposes only SaveChangesAsync.
+- Never expose DbSet<T> from Application interfaces.
 - Never inject AppDbContext directly into Application layer classes.
 
 ## Naming Rules
@@ -198,7 +230,7 @@ Use Testcontainers (Testcontainers.PostgreSql NuGet) to spin up isolated Postgre
 
 Each test class or collection gets a fresh migrated database.
 
-Unit test pure domain logic (price code, calculations) without DB.
+Unit test pure domain logic such as price code and calculations without DB.
 Integration tests hit real PostgreSQL via Testcontainers.
 
 Test these modules:

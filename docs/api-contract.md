@@ -300,6 +300,15 @@ Creates product from extracted item.
 
 Creates draft bill.
 
+Request:
+
+```json
+{
+  "customerName": "optional",
+  "customerPhone": "optional"
+}
+```
+
 ### GET /api/draft-sales/active
 
 Returns active draft bills.
@@ -312,9 +321,35 @@ Returns draft bill detail.
 
 Adds item to draft and reserves stock.
 
+Request:
+
+```json
+{
+  "productId": "guid",
+  "inventoryBatchId": "guid",
+  "quantity": 1,
+  "sellingPrice": 950
+}
+```
+
+Behavior:
+
+- Validates the selected batch belongs to the product.
+- Increases InventoryBatch.ReservedQuantity immediately.
+- If the same batch already exists in the draft, quantity is merged.
+
 ### PUT /api/draft-sales/{id}/items/{itemId}
 
 Updates item quantity or selling price.
+
+Request:
+
+```json
+{
+  "quantity": 2,
+  "sellingPrice": 950
+}
+```
 
 ### DELETE /api/draft-sales/{id}/items/{itemId}
 
@@ -331,6 +366,34 @@ Cancels draft and releases reserved stock.
 ### POST /api/draft-sales/{id}/complete
 
 Completes sale and converts reservation to sale.
+
+Request:
+
+```json
+{
+  "paidAmount": 500,
+  "paymentMode": 1,
+  "notes": "optional",
+  "customerName": "optional",
+  "customerPhone": "optional"
+}
+```
+
+Payment mode values:
+
+- 1 = Cash
+- 2 = UPI
+- 3 = Card
+- 4 = BankTransfer
+- 5 = Other
+
+Behavior:
+
+- Converts active stock reservations to sale.
+- Decreases InventoryBatch.CurrentQuantity and ReservedQuantity.
+- Increases InventoryBatch.SoldQuantity.
+- Stores PendingAmount when paid amount is less than total.
+- Returns ProfitAmount only for owner users.
 
 ## Sales
 

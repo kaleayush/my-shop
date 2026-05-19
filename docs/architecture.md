@@ -9,16 +9,11 @@ The application should be built as a clean, modular, maintainable system.
 ## High-Level Architecture
 
 Frontend Web App
-↓
-.NET 8 Web API
-↓
-Application Layer
-↓
-Domain Layer
-↓
-Infrastructure Layer
-↓
-PostgreSQL Database
+-> .NET 8 Web API
+-> Application Layer
+-> Domain Layer
+
+Infrastructure implements Application contracts and talks to PostgreSQL.
 
 ## Backend Architecture
 
@@ -31,6 +26,15 @@ Projects:
 - AutoPartsPOS.Domain
 - AutoPartsPOS.Infrastructure
 
+Dependency direction:
+
+- Domain depends on nothing.
+- Application depends on Domain.
+- Infrastructure depends on Application and Domain.
+- API depends on Application and Infrastructure for composition.
+
+Application and Domain must never reference Infrastructure or API.
+
 ## Layer Responsibilities
 
 ### AutoPartsPOS.API
@@ -41,16 +45,21 @@ Responsible for:
 - Middleware
 - Authentication setup
 - Swagger
+- CORS
 - Request routing
 - Global exception handling
 - API response formatting
+- HTTP-specific adapters such as current user/claims access
+- Application and Infrastructure dependency injection composition
 
 Not allowed:
 
 - Business logic
-- Direct repository calls
+- Repository logic
+- Direct repository calls from controllers
 - EF Core DbContext usage
 - Domain entity exposure as API response
+- Infrastructure persistence logic
 
 ### AutoPartsPOS.Application
 
@@ -58,12 +67,13 @@ Responsible for:
 
 - Business use cases
 - Services
-- CQRS handlers
+- CQRS handlers where useful
 - DTOs
 - Validators
-- Interfaces for Infrastructure
+- Repository/service contracts for Infrastructure and API adapters
 - Result pattern usage
 - Business workflows
+- Save/commit abstraction using IAppDbContext
 
 Examples:
 
@@ -71,6 +81,14 @@ Examples:
 - DraftSaleService
 - PurchaseBillReviewService
 - InventoryBatchService
+
+Not allowed:
+
+- EF Core DbSet<T> exposure
+- EF Core query APIs such as Include, AnyAsync, ToListAsync
+- ASP.NET HttpContext access
+- Infrastructure or API project references
+- External service implementation details
 
 ### AutoPartsPOS.Domain
 
@@ -86,6 +104,7 @@ Domain must not depend on:
 
 - EF Core
 - API
+- Application
 - Infrastructure
 
 ### AutoPartsPOS.Infrastructure
@@ -95,48 +114,64 @@ Responsible for:
 - EF Core DbContext
 - Repository implementations
 - PostgreSQL configuration
+- EF Core migrations
 - File storage
 - OCR integration
-- External services
+- External service implementations
 - Email/WhatsApp integration in future
+
+Not allowed:
+
+- Controllers or API response formatting
+- HTTP context or claims access
+- Business workflow orchestration
+
+Infrastructure depends inward on Application contracts and Domain entities.
 
 ## Data Access Pattern
 
-Use Repository pattern only. No explicit Unit of Work interface.
+Use Repository pattern plus a minimal save abstraction. No separate Unit of Work interface is currently used.
 
 Rules:
 
-- EF Core DbContext (scoped lifetime) is the implicit unit of work.
-- Each repository receives DbContext via constructor injection.
+- EF Core DbContext is registered as scoped.
+- AppDbContext is the implicit unit of work.
+- Each repository implementation receives AppDbContext via constructor injection.
 - Repositories only build queries and track entity changes.
 - Repositories must NOT call SaveChangesAsync internally.
-- Application services call SaveChangesAsync after all repository operations complete.
-- This ensures multi-repository operations in one service method are a single transaction.
+- Application services call IAppDbContext.SaveChangesAsync after all repository operations complete.
+- This keeps multi-repository operations in one service method under one transaction boundary.
+- Application services must not use EF Core DbSet<T>, Include, AnyAsync, or other EF query APIs directly.
+- Application services must use repository interfaces for all persistence reads/writes.
 
 Example:
 
 Application service injects IProductRepository and IInventoryBatchRepository.
-Service calls repo methods to stage changes.
-Service calls _context.SaveChangesAsync() once at end.
-Single transaction. No explicit UoW wrapper needed.
+Service calls repository methods to stage changes.
+Service calls IAppDbContext.SaveChangesAsync() once at the end.
+
+Repository interfaces live in Application because Application owns use-case contracts.
+Repository implementations live in Infrastructure because Infrastructure owns EF Core and PostgreSQL details.
 
 ## Testability
 
-Define IAppDbContext interface in Application layer.
-AppDbContext in Infrastructure implements it.
-Services depend on IAppDbContext, not AppDbContext directly.
+IAppDbContext is defined in Application and implemented by AppDbContext in Infrastructure.
 
-IAppDbContext exposes:
+IAppDbContext exposes only:
 
-- DbSet<T> per entity
 - Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
 
-This allows unit tests to mock IAppDbContext without hitting PostgreSQL.
-Repositories also depend on IAppDbContext, not AppDbContext.
+This lets Application services control the commit boundary without referencing EF Core.
 
-Dependency direction:
+Repositories depend on AppDbContext because they are Infrastructure implementations.
+Application services depend on repository interfaces and IAppDbContext.
 
-Domain <- Application (IAppDbContext) <- Infrastructure (AppDbContext : IAppDbContext)
+Current user access:
+
+- ICurrentUserService interface lives in Application.
+- API implements ICurrentUserService using IHttpContextAccessor and JWT claims.
+- Application services depend only on ICurrentUserService.
+- Infrastructure must not use IHttpContextAccessor.
 
 ## Frontend Architecture
 
@@ -200,6 +235,12 @@ Use EF Core migrations.
 
 Use JWT authentication.
 
+Current implementation:
+
+- JWT validation is configured in API service extensions.
+- Current user claims are adapted in API through ICurrentUserService.
+- Application receives only the current user abstraction.
+
 Future:
 
 - Refresh token
@@ -247,50 +288,32 @@ Mobile app should use the same backend APIs.
 ### Purchase Flow
 
 Upload PDF
-↓
-OCR extract
-↓
-Review/correct
-↓
-Product matching
-↓
-Create purchase bill
-↓
-Create inventory batches
-↓
-Update dealer ledger
+-> OCR extract
+-> Review/correct
+-> Product matching
+-> Create purchase bill
+-> Create inventory batches
+-> Update dealer ledger
 
 ### Sale Flow
 
 Search product
-↓
-Select dealer batch
-↓
-Enter selling price
-↓
-Add to draft bill
-↓
-Reserve stock
-↓
-Complete payment
-↓
-Create sale
-↓
-Reduce/reserve stock
-↓
-Calculate revenue/profit
+-> Select dealer batch
+-> Enter selling price
+-> Add to draft bill
+-> Reserve stock
+-> Complete payment
+-> Create sale
+-> Reduce/reserve stock
+-> Calculate revenue/profit
 
 ### Return Flow
 
 Select sale item
-↓
-Return product
-↓
-Good condition: add back to stock
-↓
-Damaged: add to damaged stock
-↓
-Adjust reports
+-> Return product
+-> Good condition: add back to stock
+-> Damaged: add to damaged stock
+-> Adjust reports
 
 ## Design Principles
 

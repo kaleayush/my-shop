@@ -7,6 +7,7 @@ using AutoPartsPOS.Application.Features.Colors;
 using AutoPartsPOS.Application.Features.Dealers;
 using AutoPartsPOS.Application.Features.Graphics;
 using AutoPartsPOS.Application.Features.Inventory;
+using AutoPartsPOS.Application.Features.Pos;
 using AutoPartsPOS.Application.Features.Products;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,7 @@ public static class DependencyInjection
         services.AddScoped<IProductService, ProductService>();
         services.AddScoped<IInventoryService, InventoryService>();
         services.AddScoped<IPurchasePriceCodeService, PurchasePriceCodeService>();
+        services.AddScoped<IPosService, PosService>();
         return services;
     }
 }

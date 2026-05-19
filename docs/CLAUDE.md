@@ -79,7 +79,9 @@ Current priority:
 - Use Result pattern for service responses.
 - Use FluentValidation for input validation.
 - Keep business logic inside Application layer.
+- Keep repository interfaces and application contracts inside Application layer.
 - Keep EF Core and external integrations inside Infrastructure layer.
+- Keep HTTP-specific adapters such as current-user claims access inside API layer.
 - Domain layer must not depend on Infrastructure or API.
 - Update docs/tasks.md after each completed task.
 - Update docs/api-contract.md when APIs change.

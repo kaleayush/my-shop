@@ -5,10 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AutoPartsPOS.API.Controllers;
 
-[ApiController]
 [Route("api/bike-companies")]
 [Authorize]
-public class BikeCompaniesController : ControllerBase
+public class BikeCompaniesController : BaseApiController
 {
     private readonly IBikeCompanyService _companies;
     private readonly IValidator<CreateBikeCompanyRequest> _createValidator;
@@ -28,15 +27,15 @@ public class BikeCompaniesController : ControllerBase
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
         var result = await _companies.GetAllAsync(ct);
-        return Ok(result.Value);
+        return OkResponse(result.Value);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
     {
         var result = await _companies.GetByIdAsync(id, ct);
-        if (result.IsFailure) return NotFound(new { error = result.Error });
-        return Ok(result.Value);
+        if (result.IsFailure) return NotFoundResponse(result.Error!);
+        return OkResponse(result.Value);
     }
 
     [HttpPost]
@@ -44,11 +43,11 @@ public class BikeCompaniesController : ControllerBase
     {
         var validation = await _createValidator.ValidateAsync(request, ct);
         if (!validation.IsValid)
-            return BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+            return ValidationFailedResponse(validation.Errors.Select(e => e.ErrorMessage));
 
         var result = await _companies.CreateAsync(request, ct);
-        if (result.IsFailure) return BadRequest(new { error = result.Error });
-        return CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value);
+        if (result.IsFailure) return BadRequestResponse(result.Error!);
+        return CreatedResponse(nameof(GetById), new { id = result.Value!.Id }, result.Value, "Bike company created successfully");
     }
 
     [HttpPut("{id:guid}")]
@@ -56,18 +55,18 @@ public class BikeCompaniesController : ControllerBase
     {
         var validation = await _updateValidator.ValidateAsync(request, ct);
         if (!validation.IsValid)
-            return BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+            return ValidationFailedResponse(validation.Errors.Select(e => e.ErrorMessage));
 
         var result = await _companies.UpdateAsync(id, request, ct);
-        if (result.IsFailure) return NotFound(new { error = result.Error });
-        return Ok(result.Value);
+        if (result.IsFailure) return NotFoundResponse(result.Error!);
+        return OkResponse(result.Value, "Bike company updated successfully");
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         var result = await _companies.DeleteAsync(id, ct);
-        if (result.IsFailure) return NotFound(new { error = result.Error });
-        return NoContent();
+        if (result.IsFailure) return NotFoundResponse(result.Error!);
+        return DeletedResponse("Bike company deleted successfully");
     }
 }

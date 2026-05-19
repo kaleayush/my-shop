@@ -4,6 +4,74 @@ Base URL:
 
 /api
 
+## Standard Response Envelope
+
+All endpoints return a consistent JSON envelope:
+
+```json
+{
+  "statusCode": 200,
+  "message": "Success",
+  "data": { ... },
+  "isSuccess": true,
+  "utcTimestamp": "2026-05-19T10:00:00Z",
+  "errors": null
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| statusCode | int | HTTP status code mirrored in body |
+| message | string | Human-readable result message |
+| data | T or null | Response payload |
+| isSuccess | bool | true when statusCode is 2xx |
+| utcTimestamp | datetime | UTC time of response |
+| errors | string[] or null | Validation error list (populated on 400 validation failures) |
+
+### Paginated Response
+
+For list endpoints that support pagination, `data` is:
+
+```json
+{
+  "items": [...],
+  "totalCount": 50,
+  "page": 1,
+  "pageSize": 20,
+  "totalPages": 3,
+  "hasNextPage": true,
+  "hasPreviousPage": false
+}
+```
+
+### Error Response (validation)
+
+```json
+{
+  "statusCode": 400,
+  "message": "Validation failed",
+  "data": null,
+  "isSuccess": false,
+  "utcTimestamp": "2026-05-19T10:00:00Z",
+  "errors": ["Name is required", "Phone must be at most 20 characters"]
+}
+```
+
+### Error Response (not found / business rule)
+
+```json
+{
+  "statusCode": 404,
+  "message": "Dealer not found",
+  "data": null,
+  "isSuccess": false,
+  "utcTimestamp": "2026-05-19T10:00:00Z",
+  "errors": null
+}
+```
+
+---
+
 ## Auth
 
 ### POST /api/auth/register-shop-owner

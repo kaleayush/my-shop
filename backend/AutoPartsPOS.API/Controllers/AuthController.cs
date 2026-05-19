@@ -6,9 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AutoPartsPOS.API.Controllers;
 
-[ApiController]
 [Route("api/auth")]
-public class AuthController : ControllerBase
+public class AuthController : BaseApiController
 {
     private readonly IAuthService _authService;
     private readonly IValidator<RegisterShopOwnerRequest> _registerValidator;
@@ -31,11 +30,11 @@ public class AuthController : ControllerBase
     {
         var validation = await _registerValidator.ValidateAsync(request, ct);
         if (!validation.IsValid)
-            return BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+            return ValidationFailedResponse(validation.Errors.Select(e => e.ErrorMessage));
 
         var result = await _authService.RegisterShopOwnerAsync(request, ct);
-        if (result.IsFailure) return BadRequest(new { error = result.Error });
-        return Ok(result.Value);
+        if (result.IsFailure) return BadRequestResponse(result.Error!);
+        return OkResponse(result.Value, "Shop registered successfully");
     }
 
     [HttpPost("login")]
@@ -45,11 +44,11 @@ public class AuthController : ControllerBase
     {
         var validation = await _loginValidator.ValidateAsync(request, ct);
         if (!validation.IsValid)
-            return BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+            return ValidationFailedResponse(validation.Errors.Select(e => e.ErrorMessage));
 
         var result = await _authService.LoginAsync(request, ct);
-        if (result.IsFailure) return Unauthorized(new { error = result.Error });
-        return Ok(result.Value);
+        if (result.IsFailure) return UnauthorizedResponse(result.Error!);
+        return OkResponse(result.Value, "Login successful");
     }
 
     [HttpGet("me")]
@@ -57,7 +56,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> GetCurrentUser(CancellationToken ct)
     {
         var result = await _authService.GetCurrentUserAsync(ct);
-        if (result.IsFailure) return NotFound(new { error = result.Error });
-        return Ok(result.Value);
+        if (result.IsFailure) return NotFoundResponse(result.Error!);
+        return OkResponse(result.Value);
     }
 }

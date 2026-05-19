@@ -17,6 +17,7 @@
 - [x] Setup Swagger
 - [x] Setup dependency injection structure
 - [x] Build solution successfully
+- [x] Create standardized API response envelope (ApiResponse<T>, PagedResponse<T>, BaseApiController)
 
 ## Phase 2: Web Foundation
 
@@ -50,15 +51,15 @@
 
 ## Phase 4: Master Data
 
-- [ ] Dealer CRUD API
-- [ ] Category CRUD API
-- [ ] Brand CRUD API
-- [ ] BikeCompany CRUD API
-- [ ] BikeModel CRUD API
-- [ ] Color CRUD API
-- [ ] Graphic CRUD API
-- [ ] Dealer UI
-- [ ] Master data settings UI
+- [x] Dealer CRUD API
+- [x] Category CRUD API
+- [x] Brand CRUD API
+- [x] BikeCompany CRUD API
+- [x] BikeModel CRUD API
+- [x] Color CRUD API
+- [x] Graphic CRUD API
+- [x] Dealer UI
+- [x] Master data settings UI
 
 ## Phase 5: Product and Inventory
 

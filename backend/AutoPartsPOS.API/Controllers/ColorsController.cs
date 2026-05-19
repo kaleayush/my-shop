@@ -5,10 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AutoPartsPOS.API.Controllers;
 
-[ApiController]
 [Route("api/colors")]
 [Authorize]
-public class ColorsController : ControllerBase
+public class ColorsController : BaseApiController
 {
     private readonly IColorService _colors;
     private readonly IValidator<CreateColorRequest> _createValidator;
@@ -28,15 +27,15 @@ public class ColorsController : ControllerBase
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
         var result = await _colors.GetAllAsync(ct);
-        return Ok(result.Value);
+        return OkResponse(result.Value);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
     {
         var result = await _colors.GetByIdAsync(id, ct);
-        if (result.IsFailure) return NotFound(new { error = result.Error });
-        return Ok(result.Value);
+        if (result.IsFailure) return NotFoundResponse(result.Error!);
+        return OkResponse(result.Value);
     }
 
     [HttpPost]
@@ -44,11 +43,11 @@ public class ColorsController : ControllerBase
     {
         var validation = await _createValidator.ValidateAsync(request, ct);
         if (!validation.IsValid)
-            return BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+            return ValidationFailedResponse(validation.Errors.Select(e => e.ErrorMessage));
 
         var result = await _colors.CreateAsync(request, ct);
-        if (result.IsFailure) return BadRequest(new { error = result.Error });
-        return CreatedAtAction(nameof(GetById), new { id = result.Value!.Id }, result.Value);
+        if (result.IsFailure) return BadRequestResponse(result.Error!);
+        return CreatedResponse(nameof(GetById), new { id = result.Value!.Id }, result.Value, "Color created successfully");
     }
 
     [HttpPut("{id:guid}")]
@@ -56,18 +55,18 @@ public class ColorsController : ControllerBase
     {
         var validation = await _updateValidator.ValidateAsync(request, ct);
         if (!validation.IsValid)
-            return BadRequest(validation.Errors.Select(e => e.ErrorMessage));
+            return ValidationFailedResponse(validation.Errors.Select(e => e.ErrorMessage));
 
         var result = await _colors.UpdateAsync(id, request, ct);
-        if (result.IsFailure) return NotFound(new { error = result.Error });
-        return Ok(result.Value);
+        if (result.IsFailure) return NotFoundResponse(result.Error!);
+        return OkResponse(result.Value, "Color updated successfully");
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         var result = await _colors.DeleteAsync(id, ct);
-        if (result.IsFailure) return NotFound(new { error = result.Error });
-        return NoContent();
+        if (result.IsFailure) return NotFoundResponse(result.Error!);
+        return DeletedResponse("Color deleted successfully");
     }
 }

@@ -1,15 +1,15 @@
-using AutoPartsPOS.Application.Interfaces;
 using AutoPartsPOS.Application.Interfaces.Repositories;
 using AutoPartsPOS.Domain.Entities;
+using AutoPartsPOS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoPartsPOS.Infrastructure.Persistence.Repositories;
 
 public class ColorRepository : IColorRepository
 {
-    private readonly IAppDbContext _context;
+    private readonly AppDbContext _context;
 
-    public ColorRepository(IAppDbContext context) => _context = context;
+    public ColorRepository(AppDbContext context) => _context = context;
 
     public async Task<List<Color>> GetAllAsync(Guid shopId, CancellationToken ct = default) =>
         await _context.Colors

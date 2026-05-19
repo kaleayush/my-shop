@@ -1,15 +1,15 @@
-using AutoPartsPOS.Application.Interfaces;
 using AutoPartsPOS.Application.Interfaces.Repositories;
 using AutoPartsPOS.Domain.Entities;
+using AutoPartsPOS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoPartsPOS.Infrastructure.Persistence.Repositories;
 
 public class ProductRepository : IProductRepository
 {
-    private readonly IAppDbContext _context;
+    private readonly AppDbContext _context;
 
-    public ProductRepository(IAppDbContext context) => _context = context;
+    public ProductRepository(AppDbContext context) => _context = context;
 
     public async Task<List<Product>> SearchAsync(
         Guid shopId,

@@ -1,15 +1,15 @@
-using AutoPartsPOS.Application.Interfaces;
 using AutoPartsPOS.Application.Interfaces.Repositories;
 using AutoPartsPOS.Domain.Entities;
+using AutoPartsPOS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoPartsPOS.Infrastructure.Persistence.Repositories;
 
 public class CategoryRepository : ICategoryRepository
 {
-    private readonly IAppDbContext _context;
+    private readonly AppDbContext _context;
 
-    public CategoryRepository(IAppDbContext context) => _context = context;
+    public CategoryRepository(AppDbContext context) => _context = context;
 
     public async Task<List<Category>> GetAllAsync(Guid shopId, CancellationToken ct = default) =>
         await _context.Categories

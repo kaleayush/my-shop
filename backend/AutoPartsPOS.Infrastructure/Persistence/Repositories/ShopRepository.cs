@@ -1,15 +1,15 @@
-using AutoPartsPOS.Application.Interfaces;
 using AutoPartsPOS.Application.Interfaces.Repositories;
 using AutoPartsPOS.Domain.Entities;
+using AutoPartsPOS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoPartsPOS.Infrastructure.Persistence.Repositories;
 
 public class ShopRepository : IShopRepository
 {
-    private readonly IAppDbContext _context;
+    private readonly AppDbContext _context;
 
-    public ShopRepository(IAppDbContext context) => _context = context;
+    public ShopRepository(AppDbContext context) => _context = context;
 
     public async Task AddAsync(Shop shop, CancellationToken ct = default) =>
         await _context.Shops.AddAsync(shop, ct);

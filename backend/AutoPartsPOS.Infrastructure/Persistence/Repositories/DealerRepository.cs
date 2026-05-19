@@ -1,15 +1,15 @@
-using AutoPartsPOS.Application.Interfaces;
 using AutoPartsPOS.Application.Interfaces.Repositories;
 using AutoPartsPOS.Domain.Entities;
+using AutoPartsPOS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoPartsPOS.Infrastructure.Persistence.Repositories;
 
 public class DealerRepository : IDealerRepository
 {
-    private readonly IAppDbContext _context;
+    private readonly AppDbContext _context;
 
-    public DealerRepository(IAppDbContext context) => _context = context;
+    public DealerRepository(AppDbContext context) => _context = context;
 
     public async Task<List<Dealer>> GetAllAsync(Guid shopId, CancellationToken ct = default) =>
         await _context.Dealers

@@ -1,15 +1,15 @@
-using AutoPartsPOS.Application.Interfaces;
 using AutoPartsPOS.Application.Interfaces.Repositories;
 using AutoPartsPOS.Domain.Entities;
+using AutoPartsPOS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
 namespace AutoPartsPOS.Infrastructure.Persistence.Repositories;
 
 public class InventoryBatchRepository : IInventoryBatchRepository
 {
-    private readonly IAppDbContext _context;
+    private readonly AppDbContext _context;
 
-    public InventoryBatchRepository(IAppDbContext context) => _context = context;
+    public InventoryBatchRepository(AppDbContext context) => _context = context;
 
     public async Task<List<InventoryBatch>> GetAllAsync(Guid shopId, CancellationToken ct = default) =>
         await BaseQuery(shopId)
@@ -35,6 +35,9 @@ public class InventoryBatchRepository : IInventoryBatchRepository
 
     public async Task<InventoryBatch?> GetByIdAsync(Guid id, Guid shopId, CancellationToken ct = default) =>
         await BaseQuery(shopId).FirstOrDefaultAsync(b => b.Id == id, ct);
+
+    public async Task<int> CountByShopAsync(Guid shopId, CancellationToken ct = default) =>
+        await _context.InventoryBatches.CountAsync(x => x.ShopId == shopId, ct);
 
     public async Task AddAsync(InventoryBatch batch, CancellationToken ct = default) =>
         await _context.InventoryBatches.AddAsync(batch, ct);

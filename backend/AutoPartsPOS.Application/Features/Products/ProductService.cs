@@ -3,19 +3,39 @@ using AutoPartsPOS.Application.Interfaces;
 using AutoPartsPOS.Application.Interfaces.Repositories;
 using AutoPartsPOS.Application.Interfaces.Services;
 using AutoPartsPOS.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
 
 namespace AutoPartsPOS.Application.Features.Products;
 
 public class ProductService : IProductService
 {
     private readonly IProductRepository _products;
+    private readonly ICategoryRepository _categories;
+    private readonly IBrandRepository _brands;
+    private readonly IBikeCompanyRepository _bikeCompanies;
+    private readonly IBikeModelRepository _bikeModels;
+    private readonly IColorRepository _colors;
+    private readonly IGraphicRepository _graphics;
     private readonly ICurrentUserService _currentUser;
     private readonly IAppDbContext _context;
 
-    public ProductService(IProductRepository products, ICurrentUserService currentUser, IAppDbContext context)
+    public ProductService(
+        IProductRepository products,
+        ICategoryRepository categories,
+        IBrandRepository brands,
+        IBikeCompanyRepository bikeCompanies,
+        IBikeModelRepository bikeModels,
+        IColorRepository colors,
+        IGraphicRepository graphics,
+        ICurrentUserService currentUser,
+        IAppDbContext context)
     {
         _products = products;
+        _categories = categories;
+        _brands = brands;
+        _bikeCompanies = bikeCompanies;
+        _bikeModels = bikeModels;
+        _colors = colors;
+        _graphics = graphics;
         _currentUser = currentUser;
         _context = context;
     }
@@ -136,31 +156,47 @@ public class ProductService : IProductService
     {
         var shopId = _currentUser.ShopId;
 
-        if (categoryId.HasValue && !await _context.Categories.AnyAsync(x => x.Id == categoryId && x.IsActive && (x.ShopId == null || x.ShopId == shopId), ct))
-            return Result.Failure("Category not found.");
+        if (categoryId.HasValue)
+        {
+            var category = await _categories.GetByIdAsync(categoryId.Value, ct);
+            if (category is null || !category.IsActive || (category.ShopId is not null && category.ShopId != shopId))
+                return Result.Failure("Category not found.");
+        }
 
-        if (brandId.HasValue && !await _context.Brands.AnyAsync(x => x.Id == brandId && x.IsActive && x.ShopId == shopId, ct))
-            return Result.Failure("Brand not found.");
+        if (brandId.HasValue)
+        {
+            var brand = await _brands.GetByIdAsync(brandId.Value, shopId, ct);
+            if (brand is null || !brand.IsActive)
+                return Result.Failure("Brand not found.");
+        }
 
-        if (bikeCompanyId.HasValue && !await _context.BikeCompanies.AnyAsync(x => x.Id == bikeCompanyId && x.IsActive, ct))
-            return Result.Failure("Bike company not found.");
+        if (bikeCompanyId.HasValue)
+        {
+            var company = await _bikeCompanies.GetByIdAsync(bikeCompanyId.Value, ct);
+            if (company is null || !company.IsActive)
+                return Result.Failure("Bike company not found.");
+        }
 
         if (bikeModelId.HasValue)
         {
-            var modelExists = await _context.BikeModels.AnyAsync(x =>
-                x.Id == bikeModelId &&
-                x.IsActive &&
-                (!bikeCompanyId.HasValue || x.BikeCompanyId == bikeCompanyId),
-                ct);
-
-            if (!modelExists) return Result.Failure("Bike model not found.");
+            var model = await _bikeModels.GetByIdAsync(bikeModelId.Value, ct);
+            if (model is null || !model.IsActive || (bikeCompanyId.HasValue && model.BikeCompanyId != bikeCompanyId))
+                return Result.Failure("Bike model not found.");
         }
 
-        if (colorId.HasValue && !await _context.Colors.AnyAsync(x => x.Id == colorId && x.IsActive && x.ShopId == shopId, ct))
-            return Result.Failure("Color not found.");
+        if (colorId.HasValue)
+        {
+            var color = await _colors.GetByIdAsync(colorId.Value, shopId, ct);
+            if (color is null || !color.IsActive)
+                return Result.Failure("Color not found.");
+        }
 
-        if (graphicId.HasValue && !await _context.Graphics.AnyAsync(x => x.Id == graphicId && x.IsActive && x.ShopId == shopId, ct))
-            return Result.Failure("Graphic not found.");
+        if (graphicId.HasValue)
+        {
+            var graphic = await _graphics.GetByIdAsync(graphicId.Value, shopId, ct);
+            if (graphic is null || !graphic.IsActive)
+                return Result.Failure("Graphic not found.");
+        }
 
         return Result.Success();
     }

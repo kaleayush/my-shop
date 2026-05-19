@@ -1,8 +1,7 @@
 using AutoPartsPOS.Application.Interfaces.Services;
-using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 
-namespace AutoPartsPOS.Infrastructure.Services;
+namespace AutoPartsPOS.API.Services;
 
 public class CurrentUserService : ICurrentUserService
 {

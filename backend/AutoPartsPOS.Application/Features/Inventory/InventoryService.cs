@@ -3,24 +3,29 @@ using AutoPartsPOS.Application.Interfaces;
 using AutoPartsPOS.Application.Interfaces.Repositories;
 using AutoPartsPOS.Application.Interfaces.Services;
 using AutoPartsPOS.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
 
 namespace AutoPartsPOS.Application.Features.Inventory;
 
 public class InventoryService : IInventoryService
 {
     private readonly IInventoryBatchRepository _batches;
+    private readonly IProductRepository _products;
+    private readonly IDealerRepository _dealers;
     private readonly IPurchasePriceCodeService _priceCode;
     private readonly ICurrentUserService _currentUser;
     private readonly IAppDbContext _context;
 
     public InventoryService(
         IInventoryBatchRepository batches,
+        IProductRepository products,
+        IDealerRepository dealers,
         IPurchasePriceCodeService priceCode,
         ICurrentUserService currentUser,
         IAppDbContext context)
     {
         _batches = batches;
+        _products = products;
+        _dealers = dealers;
         _priceCode = priceCode;
         _currentUser = currentUser;
         _context = context;
@@ -34,8 +39,8 @@ public class InventoryService : IInventoryService
 
     public async Task<Result<List<InventoryBatchResponse>>> GetByProductAsync(Guid productId, CancellationToken ct = default)
     {
-        var productExists = await _context.Products.AnyAsync(p => p.Id == productId && p.ShopId == _currentUser.ShopId, ct);
-        if (!productExists) return Result.Failure<List<InventoryBatchResponse>>("Product not found.");
+        var product = await _products.GetByIdAsync(productId, _currentUser.ShopId, ct);
+        if (product is null) return Result.Failure<List<InventoryBatchResponse>>("Product not found.");
 
         var batches = await _batches.GetByProductAsync(productId, _currentUser.ShopId, ct);
         return Result.Success(batches.Select(Map).ToList());
@@ -49,11 +54,12 @@ public class InventoryService : IInventoryService
 
     public async Task<Result<InventoryBatchResponse>> CreateBatchAsync(CreateInventoryBatchRequest request, CancellationToken ct = default)
     {
-        var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == request.ProductId && p.ShopId == _currentUser.ShopId && p.IsActive, ct);
+        var product = await _products.GetByIdAsync(request.ProductId, _currentUser.ShopId, ct);
         if (product is null) return Result.Failure<InventoryBatchResponse>("Product not found.");
+        if (!product.IsActive) return Result.Failure<InventoryBatchResponse>("Product is inactive.");
 
-        var dealerExists = await _context.Dealers.AnyAsync(d => d.Id == request.DealerId && d.ShopId == _currentUser.ShopId && d.IsActive, ct);
-        if (!dealerExists) return Result.Failure<InventoryBatchResponse>("Dealer not found.");
+        var dealer = await _dealers.GetByIdAsync(request.DealerId, _currentUser.ShopId, ct);
+        if (dealer is null || !dealer.IsActive) return Result.Failure<InventoryBatchResponse>("Dealer not found.");
 
         var batch = new InventoryBatch
         {
@@ -126,7 +132,7 @@ public class InventoryService : IInventoryService
 
     private async Task<string> GenerateBatchNumberAsync(CancellationToken ct)
     {
-        var count = await _context.InventoryBatches.CountAsync(x => x.ShopId == _currentUser.ShopId, ct);
+        var count = await _batches.CountByShopAsync(_currentUser.ShopId, ct);
         return $"BATCH-{DateTime.UtcNow:yyyyMMdd}-{count + 1:0000}";
     }
 

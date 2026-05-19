@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="AutoPartsPOS.API/AutoPartsPOS.API.csproj" />
+  <Project Path="AutoPartsPOS.Application/AutoPartsPOS.Application.csproj" />
+  <Project Path="AutoPartsPOS.Domain/AutoPartsPOS.Domain.csproj" />
+  <Project Path="AutoPartsPOS.Infrastructure/AutoPartsPOS.Infrastructure.csproj" />
+</Solution>

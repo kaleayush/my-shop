@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx shadcn@latest add --yes sidebar badge avatar dropdown-menu separator sheet tooltip)"
+    ]
+  }
+}

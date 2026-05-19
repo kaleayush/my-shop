@@ -63,18 +63,18 @@
 
 ## Phase 5: Product and Inventory
 
-- [ ] Product entity
-- [ ] ProductImage entity
-- [ ] InventoryBatch entity
-- [ ] Product CRUD API
-- [ ] Product search API
-- [ ] Product image upload API
-- [ ] Inventory batch API
-- [ ] Purchase price code service
-- [ ] Low-stock API
-- [ ] Product UI
-- [ ] Inventory UI
-- [ ] Product detail UI
+- [x] Product entity
+- [x] ProductImage entity
+- [x] InventoryBatch entity
+- [x] Product CRUD API
+- [x] Product search API
+- [x] Product image upload API
+- [x] Inventory batch API
+- [x] Purchase price code service
+- [x] Low-stock API
+- [x] Product UI
+- [x] Inventory UI
+- [x] Product detail UI
 
 ## Phase 6: POS Billing
 

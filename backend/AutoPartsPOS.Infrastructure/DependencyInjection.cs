@@ -34,6 +34,8 @@ public static class DependencyInjection
         services.AddScoped<IBikeModelRepository, BikeModelRepository>();
         services.AddScoped<IColorRepository, ColorRepository>();
         services.AddScoped<IGraphicRepository, GraphicRepository>();
+        services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IInventoryBatchRepository, InventoryBatchRepository>();
 
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();

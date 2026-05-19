@@ -193,6 +193,13 @@ Search products by:
 - category
 - dealer
 
+Query parameters:
+
+- query optional string
+- categoryId optional guid
+- dealerId optional guid
+- includeInactive optional boolean
+
 ### GET /api/products/{id}
 
 Returns product detail.
@@ -207,13 +214,49 @@ Updates product.
 
 ### POST /api/products/{id}/images
 
-Uploads product image.
+Registers a product image URL for MVP manual image upload/review.
+
+Request:
+
+```json
+{
+  "imageUrl": "https://example.com/product.jpg",
+  "isPrimary": true
+}
+```
 
 ## Inventory
+
+### GET /api/inventory/batches
+
+Returns all active inventory batches for the current shop.
 
 ### GET /api/inventory/batches/{productId}
 
 Returns dealer-wise inventory batches for product.
+
+### POST /api/inventory/batches
+
+Creates a dealer-wise inventory batch and generates the purchase price code.
+
+Request:
+
+```json
+{
+  "productId": "guid",
+  "dealerId": "guid",
+  "batchNumber": "optional",
+  "mrp": 1000,
+  "purchasePrice": 750,
+  "quantity": 2,
+  "minimumStockQuantity": 1,
+  "purchaseDate": "2026-05-19"
+}
+```
+
+### PUT /api/inventory/batches/{id}
+
+Updates stock batch metadata and regenerates purchase price code if purchase price changes.
 
 ### POST /api/inventory/adjust
 
@@ -226,6 +269,8 @@ Returns low-stock items.
 ### GET /api/inventory/reorder/dealer-wise
 
 Returns dealer-wise reorder list.
+
+In Phase 5 this returns the same low-stock batch shape grouped by dealer in the UI/client as needed.
 
 ## Purchase Bills
 

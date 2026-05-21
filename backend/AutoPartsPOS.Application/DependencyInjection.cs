@@ -9,6 +9,7 @@ using AutoPartsPOS.Application.Features.Graphics;
 using AutoPartsPOS.Application.Features.Inventory;
 using AutoPartsPOS.Application.Features.Pos;
 using AutoPartsPOS.Application.Features.Products;
+using AutoPartsPOS.Application.Features.PurchaseBills;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -31,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IInventoryService, InventoryService>();
         services.AddScoped<IPurchasePriceCodeService, PurchasePriceCodeService>();
         services.AddScoped<IPosService, PosService>();
+        services.AddScoped<IPurchaseBillService, PurchaseBillService>();
         return services;
     }
 }

@@ -36,12 +36,14 @@ public static class DependencyInjection
         services.AddScoped<IGraphicRepository, GraphicRepository>();
         services.AddScoped<IProductRepository, ProductRepository>();
         services.AddScoped<IInventoryBatchRepository, InventoryBatchRepository>();
+        services.AddScoped<IPurchaseBillRepository, PurchaseBillRepository>();
         services.AddScoped<IDraftSaleRepository, DraftSaleRepository>();
         services.AddScoped<IStockReservationRepository, StockReservationRepository>();
         services.AddScoped<ISaleRepository, SaleRepository>();
 
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<IPurchaseBillTextExtractor, PurchaseBillTextExtractor>();
 
         return services;
     }

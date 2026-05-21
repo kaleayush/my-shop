@@ -222,6 +222,9 @@ Fields:
 - IsConfirmed
 - CreatedAt
 
+Phase 7 note:
+Uploaded PDF text is not stored long-term in MVP. The API returns a short extraction preview immediately after upload, and PurchaseBillItems store the parsed review rows that the user must confirm/map.
+
 ### InventoryBatches
 
 Most important table.

@@ -98,17 +98,17 @@
 
 ## Phase 7: Purchase Bill OCR
 
-- [ ] PurchaseBill entity
-- [ ] PurchaseBillItem entity
-- [ ] PDF upload API
-- [ ] PDF text extraction
-- [ ] OCR integration placeholder
-- [ ] Review extracted bill API
-- [ ] Product matching API
-- [ ] Confirm purchase bill API
-- [ ] Create inventory batches from confirmed bill
-- [ ] Purchase bill upload UI
-- [ ] Review and mapping UI
+- [x] PurchaseBill entity
+- [x] PurchaseBillItem entity
+- [x] PDF upload API
+- [x] PDF text extraction
+- [x] OCR integration placeholder
+- [x] Review extracted bill API
+- [x] Product matching API
+- [x] Confirm purchase bill API
+- [x] Create inventory batches from confirmed bill
+- [x] Purchase bill upload UI
+- [x] Review and mapping UI
 
 ## Phase 8: Returns and Payments
 

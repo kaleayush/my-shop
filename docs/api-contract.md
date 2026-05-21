@@ -276,7 +276,24 @@ In Phase 5 this returns the same low-stock batch shape grouped by dealer in the 
 
 ### POST /api/purchase-bills/upload
 
-Uploads PDF bill.
+Uploads dealer PDF bill as multipart form data and creates a reviewable purchase bill.
+
+Form fields:
+
+- dealerId guid
+- billNumber optional string
+- billDate date
+- totalAmount decimal, can be 0 to calculate from extracted rows
+- paidAmount decimal
+- file PDF or text file
+
+Behavior:
+
+- Extracts typed PDF text when available.
+- Marks scanned/no-text PDFs with OCR placeholder status for manual review.
+- Parses item rows in review format: product name, quantity, MRP, purchase price.
+- Exact product-name matches are pre-mapped.
+- Doubtful matches are suggested only and must be manually mapped or created.
 
 ### GET /api/purchase-bills/{id}/review
 
@@ -286,13 +303,57 @@ Returns extracted bill items for review.
 
 Confirms purchase bill items and creates inventory batches.
 
+Request:
+
+```json
+{
+  "paidAmount": 5000,
+  "items": [
+    {
+      "purchaseBillItemId": "guid",
+      "productId": "guid",
+      "rawProductName": "Activa Side Panel Black",
+      "quantity": 2,
+      "mrp": 1000,
+      "purchasePrice": 750
+    }
+  ]
+}
+```
+
+Behavior:
+
+- Requires every row to be mapped to a product.
+- Updates reviewed quantity, MRP, and purchase price before confirmation.
+- Creates dealer-wise InventoryBatch rows with purchase price code.
+- Sets purchase bill status to Confirmed and recalculates pending amount.
+
 ### POST /api/purchase-bills/{id}/map-item
 
 Maps extracted item to existing product.
 
+Request:
+
+```json
+{
+  "purchaseBillItemId": "guid",
+  "productId": "guid"
+}
+```
+
 ### POST /api/purchase-bills/{id}/create-product-from-item
 
 Creates product from extracted item.
+
+Request:
+
+```json
+{
+  "purchaseBillItemId": "guid",
+  "productName": "Activa Side Panel Black",
+  "minimumStockQuantity": 0
+}
+```
 
 ## Draft Sales / POS
 

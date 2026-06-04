@@ -9,5 +9,8 @@ public record PurchaseBillExtractedText(
     string Text,
     bool UsedOcr,
     bool NeedsOcr,
-    string Status
+    string Status,
+    IReadOnlyList<ExtractedBillItem>? Items = null
 );
+
+public record ExtractedBillItem(string Name, int Qty, decimal Mrp, decimal PurchasePrice);

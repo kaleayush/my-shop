@@ -47,7 +47,12 @@ public partial class PurchaseBillService : IPurchaseBillService
             return Result.Failure<PurchaseBillReviewResponse>("Dealer not found.");
 
         var extracted = await _textExtractor.ExtractAsync(request.FileContent, request.FileName, request.ContentType, ct);
-        var parsedItems = ParseItems(extracted.Text);
+
+        // Use structured items from AI extraction when available; fall back to regex parsing
+        var parsedItems = extracted.Items is not null
+            ? extracted.Items.Select(i => new ParsedPurchaseBillItem(i.Name, i.Qty, i.Mrp, i.PurchasePrice)).ToList()
+            : ParseItems(extracted.Text);
+
         var items = new List<PurchaseBillItem>();
 
         foreach (var parsed in parsedItems)
@@ -172,7 +177,7 @@ public partial class PurchaseBillService : IPurchaseBillService
             item.ProductId = product.Id;
             item.RawProductName = requestItem.RawProductName.Trim();
             item.Quantity = requestItem.Quantity;
-            item.MRP = requestItem.MRP;
+            item.MRP = requestItem.Mrp;
             item.PurchasePrice = requestItem.PurchasePrice;
             item.SuggestedProductId = product.Id;
             item.MatchConfidence = 1;
@@ -253,12 +258,24 @@ public partial class PurchaseBillService : IPurchaseBillService
         foreach (var rawLine in extractedText.Split('\n', StringSplitOptions.RemoveEmptyEntries))
         {
             var line = rawLine.Trim();
-            if (line.Length < 5)
-                continue;
+            if (line.Length < 5) continue;
 
-            var match = ItemLineRegex().Match(line);
-            if (!match.Success)
+            // Primary: pipe-delimited output from column-aware PDF extraction
+            // Format: ProductName|qty|mrp|purchasePrice
+            var pipeMatch = PipeItemLineRegex().Match(line);
+            if (pipeMatch.Success)
+            {
+                items.Add(new ParsedPurchaseBillItem(
+                    pipeMatch.Groups["name"].Value.Trim(),
+                    int.Parse(pipeMatch.Groups["qty"].Value),
+                    decimal.Parse(pipeMatch.Groups["mrp"].Value),
+                    decimal.Parse(pipeMatch.Groups["price"].Value)));
                 continue;
+            }
+
+            // Fallback: whitespace/comma separated plain text
+            var match = ItemLineRegex().Match(line);
+            if (!match.Success) continue;
 
             items.Add(new ParsedPurchaseBillItem(
                 match.Groups["name"].Value.Trim(' ', '-', ':'),
@@ -293,7 +310,7 @@ public partial class PurchaseBillService : IPurchaseBillService
             item.Product?.ProductName,
             item.RawProductName,
             item.Quantity,
-            item.MRP,
+            item.MRP,   // maps to Mrp DTO property (positional)
             item.PurchasePrice,
             item.SuggestedProductId,
             item.SuggestedProductId == item.ProductId ? item.Product?.ProductName : null,
@@ -313,7 +330,12 @@ public partial class PurchaseBillService : IPurchaseBillService
             ? null
             : value.Length <= 4000 ? value : value[..4000];
 
-    [GeneratedRegex(@"^(?<name>.+?)(?:\s{2,}|,|\|)\s*(?<qty>\d+)(?:\s+|,|\|)(?<mrp>\d+(?:\.\d{1,2})?)(?:\s+|,|\|)(?<price>\d+(?:\.\d{1,2})?)$", RegexOptions.Compiled)]
+    // Matches column-aware extractor output: "ProductName|2|1000|750"
+    [GeneratedRegex(@"^(?<name>[^|]+)\|(?<qty>\d+)\|(?<mrp>\d+(?:\.\d{1,2})?)\|(?<price>\d+(?:\.\d{1,2})?)$", RegexOptions.Compiled)]
+    private static partial Regex PipeItemLineRegex();
+
+    // Fallback: space/comma/pipe separated plain text
+    [GeneratedRegex(@"^(?<name>.+?)(?:\s{2,}|,)\s*(?<qty>\d+)(?:\s+|,)(?<mrp>\d+(?:\.\d{1,2})?)(?:\s+|,)(?<price>\d+(?:\.\d{1,2})?)$", RegexOptions.Compiled)]
     private static partial Regex ItemLineRegex();
 
     private record ParsedPurchaseBillItem(string RawProductName, int Quantity, decimal MRP, decimal PurchasePrice);

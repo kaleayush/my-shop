@@ -54,7 +54,7 @@ public class ConfirmPurchaseBillItemRequestValidator : AbstractValidator<Confirm
         RuleFor(x => x.ProductId).NotEmpty();
         RuleFor(x => x.RawProductName).NotEmpty().MaximumLength(200);
         RuleFor(x => x.Quantity).GreaterThan(0);
-        RuleFor(x => x.MRP).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.Mrp).GreaterThanOrEqualTo(0);
         RuleFor(x => x.PurchasePrice).GreaterThanOrEqualTo(0);
     }
 }

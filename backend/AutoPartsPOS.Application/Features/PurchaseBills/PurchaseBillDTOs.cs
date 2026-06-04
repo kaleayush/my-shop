@@ -36,7 +36,7 @@ public record ConfirmPurchaseBillItemRequest(
     Guid ProductId,
     string RawProductName,
     int Quantity,
-    decimal MRP,
+    decimal Mrp,
     decimal PurchasePrice
 );
 
@@ -62,7 +62,7 @@ public record PurchaseBillItemResponse(
     string? ProductName,
     string RawProductName,
     int Quantity,
-    decimal MRP,
+    decimal Mrp,
     decimal PurchasePrice,
     Guid? SuggestedProductId,
     string? SuggestedProductName,

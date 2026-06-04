@@ -43,7 +43,14 @@ public static class DependencyInjection
 
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
-        services.AddScoped<IPurchaseBillTextExtractor, PurchaseBillTextExtractor>();
+
+        var geminiApiKey = configuration["Gemini:ApiKey"]
+            ?? throw new InvalidOperationException("Gemini:ApiKey is not configured. Add it to appsettings.json.");
+
+        // Single HttpClient instance reused across requests (socket-safe)
+        var geminiHttp = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        services.AddScoped<IPurchaseBillTextExtractor>(_ =>
+            new GeminiPurchaseBillExtractor(geminiHttp, geminiApiKey));
 
         return services;
     }

@@ -169,39 +169,31 @@ Controllers:
 
 ## Frontend Rules
 
-- Use Next.js App Router.
-- Use TypeScript only.
-- Use Tailwind CSS.
-- Use shadcn/ui.
-- Use TanStack Query for server state.
-- Use Zustand for global client state.
-- Use React Hook Form with Zod for forms.
-- Keep API calls in service files.
-- Keep UI components reusable.
-- Avoid prop drilling.
-- Avoid any type unless unavoidable.
-- Keep feature code inside modules.
+- Use React (Vite, JavaScript/JSX — no TypeScript).
+- Use Tailwind CSS for all styling.
+- Use Redux Toolkit for all global state and async API calls (createAsyncThunk).
+- Use React Router v6 for routing.
+- Use Formik + Yup for forms and validation.
+- Keep all API calls in src/services/ files.
+- Keep shared UI components in src/components/.
+- Keep Redux slices in src/store/slices/.
+- Use axiosInstance (not fetch) for all HTTP — interceptor unwraps ApiResponse envelope automatically.
+- Use React Toastify for user notifications.
+- Keep feature pages in src/pages/{FeatureName}/.
 
 ## Frontend Folder Rules
 
-web/
-- app/
-- components/
-- modules/
-- services/
-- hooks/
+frontend/src/
+- api/           (axiosInstance.js — do not duplicate)
+- components/    (Button, Input, Select, Modal — shared only)
+- config/        (routes.js, config.js)
+- layouts/       (AppLayout.jsx, Sidebar.jsx)
+- pages/         (one subfolder per feature)
+- services/      (one file per feature: ProductService.js, etc.)
 - store/
-- lib/
-- types/
-
-Feature modules:
-
-modules/products/
-- components/
-- hooks/
-- services/
-- schemas/
-- types/
+  - slices/      (one slice per feature)
+  - store.js
+- utils/         (formatters.js)
 
 ## Security Rules
 

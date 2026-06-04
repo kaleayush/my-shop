@@ -5,7 +5,7 @@ Web-first SaaS-ready inventory and POS application for bike spare parts shops.
 ## Project Structure
 
 - backend/ - .NET 8 Web API using Onion Architecture
-- web/ - Next.js web application
+- frontend/ - React (Vite) web application
 - docs/ - Claude/vibe coding documentation
 
 ## Build Order
@@ -17,7 +17,7 @@ Web-first SaaS-ready inventory and POS application for bike spare parts shops.
 5. Master data
 6. Product and inventory
 7. POS billing
-8. Purchase bill OCR
+8. Purchase bill upload + Gemini AI extraction
 9. Returns and payments
 10. Reports
 11. PWA/offline

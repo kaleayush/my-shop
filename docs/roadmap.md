@@ -20,19 +20,18 @@ Includes:
 ## Phase 2: Web Foundation
 
 Goal:
-Create Next.js web app foundation.
+Create React (Vite) web app foundation.
 
 Includes:
 
-- Next.js setup
-- TypeScript
+- Vite + React setup (JavaScript/JSX)
 - Tailwind CSS
-- shadcn/ui
-- App layout
-- Sidebar
+- React Router v6
+- Redux Toolkit store and base slices
+- axiosInstance with ApiResponse interceptor
+- App layout (sidebar + top bar)
 - Dashboard shell
-- API client
-- Auth state setup
+- Placeholder pages for all modules
 
 ## Phase 3: Auth and Shop
 
@@ -91,19 +90,19 @@ Includes:
 - Partial payment
 - Customer credit
 
-## Phase 7: Purchase Bill OCR
+## Phase 7: Purchase Bill Upload
 
 Goal:
-Upload dealer PDF bills and convert into inventory.
+Upload dealer bills (PDF or image) and convert into inventory using Gemini AI.
 
 Includes:
 
-- PDF upload
-- Text extraction
-- OCR for scanned bills
-- Review screen
-- Product mapping
-- Inventory batch creation
+- Multipart upload (PDF + images)
+- Gemini Flash AI extraction (structured JSON output)
+- Inline review screen with empty state handling
+- Product matching (exact, suggested, manual)
+- Inventory batch creation on confirm
+- Gemini API key stored in gitignored appsettings.Development.json
 
 ## Phase 8: Returns and Payments
 

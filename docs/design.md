@@ -19,10 +19,10 @@ The UI must be optimized for shop counter usage.
 
 ## UI Stack
 
-- Next.js
+- React (Vite)
 - Tailwind CSS
-- shadcn/ui
-- Lucide icons
+- Custom shared components (Button, Input, Select, Modal)
+- Inline SVG icons
 - Responsive layout
 
 ## Main Layout
@@ -109,12 +109,14 @@ Show table:
 
 Flow:
 
-1. Upload PDF
-2. Show extraction progress
-3. Show review table
-4. Allow mapping product
-5. Allow creating new product
-6. Confirm purchase bill
+1. Upload PDF or image (JPEG/PNG/etc.)
+2. Gemini AI extracts structured line items server-side
+3. Show review table inline (same page, no navigation)
+4. Show amber warning if no items extracted (image PDF, bad scan, etc.)
+5. Allow manual product mapping via search modal
+6. Confirm purchase bill and create inventory batches
+
+Note: Gemini:ApiKey must be configured in appsettings.Development.json (gitignored).
 
 ### Dealer Management
 

@@ -28,12 +28,12 @@ Build web app first, then mobile app later.
 Current priority:
 
 1. Backend foundation
-2. Web frontend foundation
+2. React frontend foundation (Vite)
 3. Auth and shop setup
 4. Master data
 5. Product and inventory batch
 6. POS billing
-7. OCR purchase bill upload
+7. Purchase bill upload + Gemini AI extraction
 8. Reports
 9. PWA/offline support
 10. Future mobile app
@@ -53,14 +53,13 @@ Current priority:
 
 ### Web Frontend
 
-- Next.js 15
-- TypeScript
+- React (Vite, JavaScript/JSX — no TypeScript)
 - Tailwind CSS
-- shadcn/ui
-- TanStack Query
-- Zustand
-- React Hook Form
-- Zod
+- Redux Toolkit (global state + async thunks)
+- React Router v6
+- Formik + Yup (forms and validation)
+- Axios (API client via axiosInstance)
+- React Toastify (notifications)
 
 ### Future Mobile
 

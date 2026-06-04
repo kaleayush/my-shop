@@ -175,55 +175,58 @@ Current user access:
 
 ## Frontend Architecture
 
-Use Next.js 15 with TypeScript.
+Use React with Vite (JavaScript/JSX).
 
-Recommended structure:
+Actual structure:
 
-web/
-- app/
-- components/
-- modules/
-- services/
-- hooks/
-- store/
-- lib/
-- types/
+frontend/
+- src/
+  - api/          (axiosInstance — response interceptor unwraps ApiResponse envelope)
+  - components/   (shared UI: Button, Input, Select, Modal)
+  - config/       (routes, config)
+  - layouts/      (AppLayout, Sidebar, SidebarContext)
+  - pages/        (one folder per feature module)
+  - services/     (API service files per feature)
+  - store/        (Redux store + slices)
+  - utils/        (formatters)
 
 ## Frontend Stack
 
-- Next.js 15
-- TypeScript
+- React (Vite, JavaScript/JSX — no TypeScript)
 - Tailwind CSS
-- shadcn/ui
-- TanStack Query
-- Zustand
-- React Hook Form
-- Zod
+- Redux Toolkit (global state, createAsyncThunk for API calls)
+- React Router v6
+- Formik + Yup (forms and validation)
+- Axios (API client)
+- React Toastify (notifications)
 
-## Frontend Module Structure
+## Frontend State Management
 
-Each feature should be grouped under modules.
+Redux Toolkit slices per feature:
 
-Example:
+- authSlice
+- dealerSlice
+- inventorySlice
+- posSlice
+- productSlice
+- purchaseBillSlice
+- settingsSlice
+- uiSlice
 
-modules/
-- auth/
-- dashboard/
-- products/
-- inventory/
-- dealers/
-- purchase-bills/
-- pos/
-- reports/
-- settings/
+## Frontend Pages
 
-Each module can contain:
+Pages are co-located with their feature folder under src/pages/:
 
-- components/
-- hooks/
-- services/
-- schemas/
-- types/
+- Auth/ — LoginPage, RegisterPage
+- Dashboard/ — DashboardPage
+- Dealers/ — DealersPage
+- POS/ — PosPage
+- Payments/ — PaymentsPage
+- Products/ — ProductsPage, InventoryPage
+- PurchaseBills/ — PurchaseBillsPage (upload + inline review)
+- Reports/ — ReportsPage
+- Returns/ — ReturnsPage
+- Settings/ — SettingsPage
 
 ## Database
 
@@ -287,11 +290,11 @@ Mobile app should use the same backend APIs.
 
 ### Purchase Flow
 
-Upload PDF
--> OCR extract
--> Review/correct
--> Product matching
--> Create purchase bill
+Upload PDF or image
+-> Gemini AI extracts structured items (name, qty, mrp, purchasePrice)
+-> Review/correct in browser
+-> Product matching (exact auto-map, fuzzy suggestion, or manual map)
+-> Confirm purchase bill
 -> Create inventory batches
 -> Update dealer ledger
 

@@ -21,17 +21,16 @@
 
 ## Phase 2: Web Foundation
 
-- [x] Create Next.js web project
-- [x] Setup TypeScript
+- [x] Create React app with Vite (JavaScript/JSX)
 - [x] Setup Tailwind CSS
-- [x] Setup shadcn/ui
-- [x] Create dashboard layout
-- [x] Create sidebar navigation
+- [x] Setup React Router v6
+- [x] Setup Redux Toolkit store
+- [x] Create base Redux slices (auth, dealer, product, inventory, pos, purchaseBill, settings, ui)
+- [x] Setup axiosInstance with ApiResponse envelope interceptor
+- [x] Create dashboard layout (AppLayout, Sidebar, SidebarContext)
+- [x] Create sidebar navigation with all module links
 - [x] Create top bar
-- [x] Setup API client
-- [x] Setup TanStack Query
-- [x] Setup Zustand
-- [x] Setup React Hook Form and Zod
+- [x] Setup Formik + Yup for forms
 - [x] Create placeholder pages for all modules
 
 ## Phase 3: Auth and Shop
@@ -96,19 +95,24 @@
 - [x] Multi-bill tabs UI
 - [x] Payment UI
 
-## Phase 7: Purchase Bill OCR
+## Phase 7: Purchase Bill Upload
 
 - [x] PurchaseBill entity
 - [x] PurchaseBillItem entity
-- [x] PDF upload API
-- [x] PDF text extraction
-- [x] OCR integration placeholder
+- [x] Multipart upload API (PDF + images)
+- [x] Gemini Flash AI extraction (GeminiPurchaseBillExtractor — all file types)
+- [x] PdfPig fallback extractor (PurchaseBillTextExtractor — typed PDFs only)
+- [x] Structured item extraction (ExtractedBillItem: name, qty, mrp, purchasePrice)
 - [x] Review extracted bill API
-- [x] Product matching API
-- [x] Confirm purchase bill API
-- [x] Create inventory batches from confirmed bill
-- [x] Purchase bill upload UI
-- [x] Review and mapping UI
+- [x] Product matching (exact auto-map, fuzzy suggestion)
+- [x] Map item to existing product API
+- [x] Create product from item API
+- [x] Confirm purchase bill API (creates inventory batches)
+- [x] MRP property: renamed to Mrp in DTOs (serializes as mrp in JSON)
+- [x] Purchase bill upload UI (Formik form)
+- [x] Inline review and mapping UI (same page, no navigation)
+- [x] Empty state when no items extracted (amber warning + extractionStatus message)
+- [x] Gemini API key in gitignored appsettings.Development.json
 
 ## Phase 8: Returns and Payments
 

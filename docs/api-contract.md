@@ -276,7 +276,7 @@ In Phase 5 this returns the same low-stock batch shape grouped by dealer in the 
 
 ### POST /api/purchase-bills/upload
 
-Uploads dealer PDF bill as multipart form data and creates a reviewable purchase bill.
+Uploads dealer bill (PDF or image) as multipart form data and creates a reviewable purchase bill.
 
 Form fields:
 
@@ -285,15 +285,16 @@ Form fields:
 - billDate date
 - totalAmount decimal, can be 0 to calculate from extracted rows
 - paidAmount decimal
-- file PDF or text file
+- file PDF, JPEG, PNG, or other image
 
 Behavior:
 
-- Extracts typed PDF text when available.
-- Marks scanned/no-text PDFs with OCR placeholder status for manual review.
-- Parses item rows in review format: product name, quantity, MRP, purchase price.
+- Sends file to Gemini Flash AI (GeminiPurchaseBillExtractor) which returns structured item JSON.
+- Requires Gemini:ApiKey in appsettings.Development.json (gitignored).
+- Parses items: product name, quantity, mrp, purchasePrice.
 - Exact product-name matches are pre-mapped.
 - Doubtful matches are suggested only and must be manually mapped or created.
+- Returns empty items list with extractionStatus message if AI finds no items.
 
 ### GET /api/purchase-bills/{id}/review
 
@@ -316,6 +317,7 @@ Request:
       "quantity": 2,
       "mrp": 1000,
       "purchasePrice": 750
+      // Note: field is "mrp" (lowercase) — DTO property is Mrp
     }
   ]
 }

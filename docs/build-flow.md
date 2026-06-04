@@ -32,7 +32,7 @@ Read docs/CLAUDE.md first.
 Verify that you understand the project direction:
 - Web-first
 - .NET 8 backend
-- Next.js frontend
+- React (Vite) frontend — JavaScript/JSX, Redux Toolkit, Formik
 - PostgreSQL
 - Onion Architecture
 - SaaS-ready
@@ -77,16 +77,14 @@ Read docs/CLAUDE.md first.
 Implement Phase 2: Web Foundation only from docs/tasks.md.
 
 Requirements:
-- Create Next.js web app
-- Setup TypeScript
+- Create React app with Vite (JavaScript/JSX, no TypeScript)
 - Setup Tailwind CSS
-- Setup shadcn/ui
-- Setup dashboard layout
-- Add sidebar and top bar
-- Add placeholder pages
-- Setup API client
-- Setup TanStack Query
-- Setup Zustand
+- Setup React Router v6
+- Setup Redux Toolkit store and base slices
+- Setup axiosInstance with ApiResponse interceptor
+- Setup dashboard layout with sidebar and top bar
+- Add placeholder pages for all modules
+- Setup Formik + Yup
 
 Do not implement business features yet.
 
@@ -214,26 +212,28 @@ Important:
 - Available stock = Current stock - Reserved stock
 - Profit owner-only
 
-## Step 9: Purchase Bill OCR
+## Step 9: Purchase Bill Upload
 
 Prompt:
 
 Read docs/CLAUDE.md first.
 
-Implement Phase 7: Purchase Bill OCR only.
+Implement Phase 7: Purchase Bill Upload only.
 
 Requirements:
-- PDF upload API
-- Extract text from typed PDF
-- OCR placeholder for scanned PDF
-- Purchase bill review screen
+- Multipart form upload API (PDF or image)
+- Gemini AI extraction (set Gemini:ApiKey in appsettings.Development.json)
+- Structured item response (name, qty, mrp, purchasePrice)
+- Purchase bill review screen (inline, same page)
 - Product matching flow
 - Confirm bill and create inventory batches
+- Show empty state with guidance when no items extracted
 
 Important:
 - Never auto-map doubtful products
 - Always show review screen
 - User confirms map or create new product
+- Gemini:ApiKey must NOT be committed to git (use appsettings.Development.json)
 
 ## Step 10: Returns and Payments
 

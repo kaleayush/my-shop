@@ -6,10 +6,11 @@ using AutoPartsPOS.Application.Interfaces.Services;
 
 namespace AutoPartsPOS.Infrastructure.Services;
 
-public class GeminiPurchaseBillExtractor : IPurchaseBillTextExtractor
+public class ClaudePurchaseBillExtractor : IPurchaseBillTextExtractor
 {
-    private static readonly string Endpoint =
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+    private const string Endpoint = "https://api.anthropic.com/v1/messages";
+    private const string Model = "claude-haiku-4-5-20251001";
+    private const string AnthropicVersion = "2023-06-01";
 
     private const string Prompt =
         "Extract all product line items from this purchase bill. " +
@@ -22,7 +23,7 @@ public class GeminiPurchaseBillExtractor : IPurchaseBillTextExtractor
     private readonly HttpClient _http;
     private readonly string _apiKey;
 
-    public GeminiPurchaseBillExtractor(HttpClient http, string apiKey)
+    public ClaudePurchaseBillExtractor(HttpClient http, string apiKey)
     {
         _http = http;
         _apiKey = apiKey;
@@ -37,25 +38,32 @@ public class GeminiPurchaseBillExtractor : IPurchaseBillTextExtractor
         var base64 = Convert.ToBase64String(bytes);
         var mimeType = ResolveMimeType(fileName, contentType);
 
+        // Claude uses "document" type for PDFs, "image" for images
+        var isPdf = mimeType == "application/pdf";
+        object fileContent2 = isPdf
+            ? new { type = "document", source = new { type = "base64", media_type = mimeType, data = base64 } }
+            : new { type = "image",    source = new { type = "base64", media_type = mimeType, data = base64 } };
+
         var requestBody = new
         {
-            contents = new[]
+            model = Model,
+            max_tokens = 2048,
+            messages = new[]
             {
                 new
                 {
-                    parts = new object[]
+                    role = "user",
+                    content = new object[]
                     {
-                        new { inline_data = new { mime_type = mimeType, data = base64 } },
-                        new { text = Prompt }
+                        fileContent2,
+                        new { type = "text", text = Prompt }
                     }
                 }
-            },
-            generationConfig = new { responseMimeType = "application/json" }
+            }
         };
 
         try
         {
-            var url = $"{Endpoint}?key={_apiKey}";
             var bodyJson = JsonSerializer.Serialize(requestBody);
 
             int[] delaysSeconds = [2, 5, 15];
@@ -63,16 +71,18 @@ public class GeminiPurchaseBillExtractor : IPurchaseBillTextExtractor
             for (int attempt = 0; attempt <= delaysSeconds.Length; attempt++)
             {
                 lastResponse?.Dispose();
-                using var request = new HttpRequestMessage(HttpMethod.Post, url)
+                using var request = new HttpRequestMessage(HttpMethod.Post, Endpoint)
                 {
                     Content = new StringContent(bodyJson, Encoding.UTF8, "application/json")
                 };
+                request.Headers.Add("x-api-key", _apiKey);
+                request.Headers.Add("anthropic-version", AnthropicVersion);
+
                 lastResponse = await _http.SendAsync(request, ct);
 
                 if ((int)lastResponse.StatusCode != 429 || attempt == delaysSeconds.Length)
                     break;
 
-                // respect Retry-After if present, else use backoff
                 int waitSec = delaysSeconds[attempt];
                 if (lastResponse.Headers.TryGetValues("Retry-After", out var vals) &&
                     int.TryParse(vals.FirstOrDefault(), out var ra))
@@ -85,7 +95,7 @@ public class GeminiPurchaseBillExtractor : IPurchaseBillTextExtractor
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync(ct);
-            var items = ParseGeminiResponse(json);
+            var items = ParseClaudeResponse(json);
 
             if (items is null || items.Count == 0)
             {
@@ -93,7 +103,7 @@ public class GeminiPurchaseBillExtractor : IPurchaseBillTextExtractor
                     string.Empty,
                     UsedOcr: true,
                     NeedsOcr: false,
-                    Status: "Gemini processed the bill but found no product line items.",
+                    Status: "Claude processed the bill but found no product line items.",
                     Items: []);
             }
 
@@ -101,7 +111,7 @@ public class GeminiPurchaseBillExtractor : IPurchaseBillTextExtractor
                 string.Empty,
                 UsedOcr: true,
                 NeedsOcr: false,
-                Status: $"Gemini AI extracted {items.Count} items from the bill.",
+                Status: $"Claude AI extracted {items.Count} items from the bill.",
                 Items: items);
         }
         catch (Exception ex)
@@ -110,37 +120,35 @@ public class GeminiPurchaseBillExtractor : IPurchaseBillTextExtractor
                 string.Empty,
                 UsedOcr: false,
                 NeedsOcr: true,
-                Status: $"Gemini extraction failed: {ex.Message}. Please enter items manually.");
+                Status: $"Claude extraction failed: {ex.Message}. Please enter items manually.");
         }
     }
 
-    private static IReadOnlyList<ExtractedBillItem>? ParseGeminiResponse(string responseJson)
+    private static IReadOnlyList<ExtractedBillItem>? ParseClaudeResponse(string responseJson)
     {
         using var root = JsonDocument.Parse(responseJson);
 
-        // Navigate: candidates[0].content.parts[0].text
+        // Navigate: content[0].text
         var text = root.RootElement
-            .GetProperty("candidates")[0]
-            .GetProperty("content")
-            .GetProperty("parts")[0]
+            .GetProperty("content")[0]
             .GetProperty("text")
             .GetString();
 
         if (string.IsNullOrWhiteSpace(text)) return null;
 
-        // Strip any accidental markdown fences
-        text = text.Trim();
-        if (text.StartsWith("```")) text = text[text.IndexOf('[')..];
-        if (text.EndsWith("```")) text = text[..text.LastIndexOf(']')];
+        var start = text.IndexOf('[');
+        var end   = text.LastIndexOf(']');
+        if (start < 0 || end <= start) return null;
+        text = text[start..(end + 1)];
 
-        using var itemsDoc = JsonDocument.Parse(text.Trim());
+        using var itemsDoc = JsonDocument.Parse(text);
         var items = new List<ExtractedBillItem>();
 
         foreach (var el in itemsDoc.RootElement.EnumerateArray())
         {
-            var name = el.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "";
-            var qty  = el.TryGetProperty("qty",  out var q) ? q.GetInt32()     : 0;
-            var mrp  = el.TryGetProperty("mrp",  out var m) ? m.GetDecimal()   : 0;
+            var name  = el.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "";
+            var qty   = el.TryGetProperty("qty",  out var q) ? q.GetInt32()        : 0;
+            var mrp   = el.TryGetProperty("mrp",  out var m) ? m.GetDecimal()      : 0;
             var price = el.TryGetProperty("purchasePrice", out var p)
                 ? p.GetDecimal()
                 : el.TryGetProperty("purchase_price", out var p2) ? p2.GetDecimal() : 0;
@@ -160,13 +168,13 @@ public class GeminiPurchaseBillExtractor : IPurchaseBillTextExtractor
 
         return Path.GetExtension(fileName).ToLowerInvariant() switch
         {
-            ".pdf"          => "application/pdf",
+            ".pdf"            => "application/pdf",
             ".jpg" or ".jpeg" => "image/jpeg",
-            ".png"          => "image/png",
-            ".gif"          => "image/gif",
-            ".bmp"          => "image/bmp",
-            ".webp"         => "image/webp",
-            _               => "application/pdf"
+            ".png"            => "image/png",
+            ".gif"            => "image/gif",
+            ".bmp"            => "image/bmp",
+            ".webp"           => "image/webp",
+            _                 => "application/pdf"
         };
     }
 }

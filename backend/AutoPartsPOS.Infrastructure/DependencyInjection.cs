@@ -44,13 +44,12 @@ public static class DependencyInjection
         services.AddScoped<IJwtService, JwtService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
 
-        var geminiApiKey = configuration["Gemini:ApiKey"]
-            ?? throw new InvalidOperationException("Gemini:ApiKey is not configured. Add it to appsettings.json.");
+        var claudeApiKey = configuration["Anthropic:ApiKey"]
+            ?? throw new InvalidOperationException("Anthropic:ApiKey is not configured. Set via user secrets or environment variable.");
 
-        // Single HttpClient instance reused across requests (socket-safe)
-        var geminiHttp = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+        var claudeHttp = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
         services.AddScoped<IPurchaseBillTextExtractor>(_ =>
-            new GeminiPurchaseBillExtractor(geminiHttp, geminiApiKey));
+            new ClaudePurchaseBillExtractor(claudeHttp, claudeApiKey));
 
         return services;
     }

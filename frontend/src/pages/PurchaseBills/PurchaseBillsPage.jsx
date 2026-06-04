@@ -7,6 +7,8 @@ import {
   uploadPurchaseBill,
   confirmPurchaseBill,
   clearCurrentBill,
+  mapBillItem,
+  createProductFromBillItem,
 } from '../../store/slices/purchaseBillSlice'
 import { fetchDealers } from '../../store/slices/dealerSlice'
 import { searchProducts } from '../../store/slices/productSlice'
@@ -33,6 +35,7 @@ export default function PurchaseBillsPage() {
   const [itemMappings, setItemMappings] = useState({})
   const [mapModalItem, setMapModalItem] = useState(null)
   const [productSearch, setProductSearch] = useState('')
+  const [processingItems, setProcessingItems] = useState(new Set())
 
   useEffect(() => {
     dispatch(fetchDealers())
@@ -55,6 +58,13 @@ export default function PurchaseBillsPage() {
     }
   }, [currentBill])
 
+  const setProcessing = (id, active) =>
+    setProcessingItems((prev) => {
+      const next = new Set(prev)
+      active ? next.add(id) : next.delete(id)
+      return next
+    })
+
   const handleUpload = async (values, { setSubmitting }) => {
     const result = await dispatch(uploadPurchaseBill(values))
     setSubmitting(false)
@@ -62,21 +72,49 @@ export default function PurchaseBillsPage() {
     toast.success('Bill uploaded — please review items')
   }
 
-  const handleMapItem = (itemId, productId) => {
-    setItemMappings((prev) => ({ ...prev, [itemId]: { ...prev[itemId], productId } }))
+  const handleAcceptItem = async (item) => {
+    setProcessing(item.id, true)
+    const result = await dispatch(createProductFromBillItem({
+      billId: currentBill.id,
+      payload: {
+        purchaseBillItemId: item.id,
+        productName: item.rawProductName,
+        minimumStockQuantity: 0,
+      },
+    }))
+    setProcessing(item.id, false)
+    if (result.error) toast.error(result.payload ?? 'Failed to create product')
+    else toast.success(`"${item.rawProductName}" added as new product & mapped`)
   }
 
+  const handleMapItem = async (itemId, productId) => {
+    setProcessing(itemId, true)
+    const result = await dispatch(mapBillItem({
+      billId: currentBill.id,
+      payload: { purchaseBillItemId: itemId, productId },
+    }))
+    setProcessing(itemId, false)
+    setMapModalItem(null)
+    if (result.error) toast.error(result.payload ?? 'Mapping failed')
+    else toast.success('Item mapped to product')
+  }
+
+  const unmappedCount = Object.values(itemMappings).filter((m) => !m.productId).length
+
   const handleConfirm = async () => {
-    const items = Object.entries(itemMappings)
-      .filter(([, m]) => m.productId)
-      .map(([id, m]) => ({
-        purchaseBillItemId: id,
-        productId: m.productId,
-        rawProductName: m.rawProductName,
-        quantity: Number(m.quantity),
-        mrp: Number(m.mrp),
-        purchasePrice: Number(m.purchasePrice),
-      }))
+    if (unmappedCount > 0) {
+      toast.error(`Map all items first — ${unmappedCount} item(s) still unmapped`)
+      return
+    }
+
+    const items = Object.entries(itemMappings).map(([id, m]) => ({
+      purchaseBillItemId: id,
+      productId: m.productId,
+      rawProductName: m.rawProductName,
+      quantity: Number(m.quantity),
+      mrp: Number(m.mrp),
+      purchasePrice: Number(m.purchasePrice),
+    }))
 
     const result = await dispatch(confirmPurchaseBill({
       id: currentBill.id,
@@ -103,7 +141,13 @@ export default function PurchaseBillsPage() {
           </div>
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => dispatch(clearCurrentBill())}>← Back</Button>
-            <Button onClick={handleConfirm} loading={loading} disabled={currentBill.items.length === 0}>Confirm & Update Inventory</Button>
+            <Button
+              onClick={handleConfirm}
+              loading={loading}
+              disabled={currentBill.items.length === 0 || unmappedCount > 0}
+            >
+              {unmappedCount > 0 ? `Map ${unmappedCount} item(s) first` : 'Confirm & Update Inventory'}
+            </Button>
           </div>
         </div>
 
@@ -125,13 +169,14 @@ export default function PurchaseBillsPage() {
                 <th className="text-right px-4 py-3">MRP</th>
                 <th className="text-right px-4 py-3">Purchase Price</th>
                 <th className="text-center px-4 py-3">Confidence</th>
-                <th className="px-4 py-3"></th>
+                <th className="px-4 py-3 text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
               {currentBill.items.map((item) => {
                 const mapping = itemMappings[item.id] ?? {}
                 const mapped = products.find((p) => p.id === mapping.productId)
+                const busy = processingItems.has(item.id)
                 return (
                   <tr key={item.id} className="border-t hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium">{item.rawProductName}</td>
@@ -151,9 +196,27 @@ export default function PurchaseBillsPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <Button variant="outline" size="sm" onClick={() => { setMapModalItem(item); setProductSearch('') }}>
-                        Map
-                      </Button>
+                      <div className="flex gap-2 justify-center">
+                        {!mapping.productId && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            loading={busy}
+                            onClick={() => handleAcceptItem(item)}
+                            className="text-green-700 border-green-300 hover:bg-green-50"
+                          >
+                            Accept
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={busy}
+                          onClick={() => { setMapModalItem(item); setProductSearch('') }}
+                        >
+                          {mapping.productId ? 'Remap' : 'Map'}
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 )
@@ -177,10 +240,7 @@ export default function PurchaseBillsPage() {
                   <button
                     key={p.id}
                     className="w-full text-left px-3 py-2 text-sm hover:bg-blue-50 border-b last:border-0"
-                    onClick={() => {
-                      handleMapItem(mapModalItem.id, p.id)
-                      setMapModalItem(null)
-                    }}
+                    onClick={() => handleMapItem(mapModalItem.id, p.id)}
                   >
                     {p.productName}
                   </button>

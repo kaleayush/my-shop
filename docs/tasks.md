@@ -103,6 +103,9 @@
 - [x] Gemini Flash AI extraction (GeminiPurchaseBillExtractor — all file types)
 - [x] PdfPig fallback extractor (PurchaseBillTextExtractor — typed PDFs only)
 - [x] Structured item extraction (ExtractedBillItem: name, qty, mrp, purchasePrice)
+- [x] Cost-optimized Claude extraction (ClaudePurchaseBillExtractor — typed PDF text local, scanned PDF/image via Claude vision)
+- [x] IPdfTextExtractor + PdfPigTextExtractor (local PDF text extraction)
+- [x] IClaudeProductLineParser + ClaudeProductLineParser (Claude Haiku, text or document/image input, row validation, exclusion filter)
 - [x] Review extracted bill API
 - [x] Product matching (exact auto-map, fuzzy suggestion)
 - [x] Map item to existing product API

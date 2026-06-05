@@ -48,8 +48,12 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("Anthropic:ApiKey is not configured. Set via user secrets or environment variable.");
 
         var claudeHttp = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };
-        services.AddScoped<IPurchaseBillTextExtractor>(_ =>
-            new ClaudePurchaseBillExtractor(claudeHttp, claudeApiKey));
+        services.AddSingleton<IPdfTextExtractor, PdfPigTextExtractor>();
+        services.AddSingleton<IClaudeProductLineParser>(_ => new ClaudeProductLineParser(claudeHttp, claudeApiKey));
+        services.AddScoped<IPurchaseBillTextExtractor>( provider=>
+            new ClaudePurchaseBillExtractor(
+                provider.GetRequiredService<IPdfTextExtractor>(),
+                provider.GetRequiredService<IClaudeProductLineParser>()));
 
         return services;
     }

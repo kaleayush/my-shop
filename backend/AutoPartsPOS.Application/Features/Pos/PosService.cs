@@ -105,7 +105,9 @@ public class PosService : IPosService
                 MRP = batch.MRP,
                 SellingPrice = request.SellingPrice,
                 PurchasePriceSnapshot = batch.PurchasePrice,
-                PurchasePriceCodeSnapshot = batch.PurchasePriceCode
+                PurchasePriceCodeSnapshot = batch.PurchasePriceCode,
+                Product = batch.Product,
+                InventoryBatch = batch
             };
 
             draft.Items.Add(item);

@@ -8,6 +8,7 @@ import {
   removeDraftItem, holdDraft, cancelDraft, completeDraft, selectDraft, closeDraftTab,
 } from '../../store/slices/posSlice'
 import { searchProducts } from '../../store/slices/productSlice'
+import ProductService from '../../services/ProductService'
 import { formatCurrency, formatDateTime } from '../../utils/formatters'
 import { debounce } from '../../utils/helpers'
 import Button from '../../components/Button'
@@ -34,8 +35,10 @@ export default function PosPage() {
   const [newDraftOpen, setNewDraftOpen] = useState(false)
   const [customerName, setCustomerName] = useState('')
   const [addingItem, setAddingItem] = useState(null)
+  const [selectedBatchId, setSelectedBatchId] = useState('')
   const [itemQty, setItemQty] = useState(1)
   const [itemPrice, setItemPrice] = useState('')
+  const [loadingProduct, setLoadingProduct] = useState(false)
 
   useEffect(() => { dispatch(fetchActiveDrafts()) }, [dispatch])
 
@@ -68,9 +71,25 @@ export default function PosPage() {
     dispatch(closeDraftTab(id))
   }
 
+  const handleSelectProduct = async (p) => {
+    setLoadingProduct(true)
+    setProductSearch('')
+    try {
+      const detail = await ProductService.getById(p.id)
+      const firstBatch = detail.batches?.[0]
+      setAddingItem(detail)
+      setSelectedBatchId(firstBatch?.id ?? '')
+      setItemPrice(String(detail.mrp))
+    } catch {
+      toast.error('Failed to load product details')
+    } finally {
+      setLoadingProduct(false)
+    }
+  }
+
   const handleAddItem = async () => {
     if (!addingItem || !selectedDraftId) return
-    const batch = addingItem.batches?.[0]
+    const batch = addingItem.batches?.find((b) => b.id === selectedBatchId) ?? addingItem.batches?.[0]
     if (!batch) { toast.error('No inventory batch for this product'); return }
     const result = await dispatch(addDraftItem({
       draftId: selectedDraftId,
@@ -84,9 +103,9 @@ export default function PosPage() {
     if (result.error) { toast.error(result.payload ?? 'Failed to add item'); return }
     toast.success(`${addingItem.productName} added`)
     setAddingItem(null)
+    setSelectedBatchId('')
     setItemQty(1)
     setItemPrice('')
-    setProductSearch('')
   }
 
   const handleRemoveItem = async (itemId) => {
@@ -164,8 +183,9 @@ export default function PosPage() {
                   {searchResults.map((p) => (
                     <button
                       key={p.id}
-                      onClick={() => { setAddingItem(p); setItemPrice(String(p.mrp)); setProductSearch('') }}
-                      className="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-sm border-b last:border-0"
+                      onClick={() => handleSelectProduct(p)}
+                      disabled={loadingProduct}
+                      className="w-full text-left px-4 py-2.5 hover:bg-gray-50 text-sm border-b last:border-0 disabled:opacity-50"
                     >
                       <span className="font-medium">{p.productName}</span>
                       <span className="text-gray-400 ml-2 text-xs">MRP {formatCurrency(p.mrp)} · Avail: {p.availableQuantity}</span>
@@ -175,9 +195,30 @@ export default function PosPage() {
               )}
             </div>
 
+            {loadingProduct && (
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm text-gray-500 text-center">
+                Loading product details…
+              </div>
+            )}
+
             {addingItem && (
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
                 <p className="font-medium text-blue-900 mb-3">{addingItem.productName}</p>
+                {addingItem.batches?.length === 0 && (
+                  <p className="text-sm text-amber-700 mb-3">No stock batches. Add inventory first.</p>
+                )}
+                {addingItem.batches?.length > 1 && (
+                  <div className="mb-3">
+                    <label className="form-label text-xs">Dealer / Batch</label>
+                    <Select value={selectedBatchId} onChange={(e) => setSelectedBatchId(e.target.value)}>
+                      {addingItem.batches.map((b) => (
+                        <option key={b.id} value={b.id}>
+                          {b.dealerName} — Avail: {b.availableQuantity} @ ₹{b.mrp}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3 mb-3">
                   <div>
                     <label className="form-label text-xs">Quantity</label>
@@ -190,7 +231,7 @@ export default function PosPage() {
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={handleAddItem} loading={loading}>Add to Bill</Button>
-                  <Button size="sm" variant="outline" onClick={() => setAddingItem(null)}>Cancel</Button>
+                  <Button size="sm" variant="outline" onClick={() => { setAddingItem(null); setSelectedBatchId('') }}>Cancel</Button>
                 </div>
               </div>
             )}

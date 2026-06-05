@@ -289,9 +289,14 @@ Form fields:
 
 Behavior:
 
-- Sends file to Gemini Flash AI (GeminiPurchaseBillExtractor) which returns structured item JSON.
-- Requires Gemini:ApiKey in appsettings.Development.json (gitignored).
+- Uses ClaudePurchaseBillExtractor (Claude Haiku) for cost-optimized extraction.
+- Typed PDFs: text extracted locally via PdfPig; if >100 chars, only text is sent to Claude (no file upload cost).
+- Scanned PDFs: PDF sent to Claude as document input for vision parsing.
+- Images: sent to Claude as image input.
+- Requires Anthropic:ApiKey in appsettings.Development.json (gitignored).
 - Parses items: product name, quantity, mrp, purchasePrice.
+- Excludes summary rows (subtotal, total, paid, pending, tax, gst, balance).
+- Validates: name not empty, qty > 0, mrp >= 0, purchasePrice >= 0.
 - Exact product-name matches are pre-mapped.
 - Doubtful matches are suggested only and must be manually mapped or created.
 - Returns empty items list with extractionStatus message if AI finds no items.
